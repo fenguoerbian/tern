@@ -277,15 +277,28 @@ g_km <- function(df,
   
   median_time <- quantile(fit_km, 0.5, conf.int = FALSE)
   if(length(median_time) > 0){
-      median_df1 <- data.frame(
-          x = -2, y = 0.5, xend = median_time[, 1], yend = 0.5
-      )
-      median_df2 <- data.frame(
-          x = median_time[, 1], 
-          y = 0, 
-          xend = median_time[, 1], 
-          yend = 0.5
-      )
+      if(is.null(dim(median_time))){
+          median_df1 <- data.frame(
+              x = -2, y = 0.5, xend = median_time, yend = 0.5
+          )
+          median_df2 <- data.frame(
+              x = median_time, 
+              y = 0, 
+              xend = median_time, 
+              yend = 0.5
+          )
+      }else{
+          median_df1 <- data.frame(
+              x = -2, y = 0.5, xend = median_time[, 1], yend = 0.5
+          )
+          median_df2 <- data.frame(
+              x = median_time[, 1], 
+              y = 0, 
+              xend = median_time[, 1], 
+              yend = 0.5
+          )
+      }
+
       median_df <- rbind(median_df1, median_df2) |>
           dplyr::mutate(
               conf.low = 0, 
