@@ -275,7 +275,7 @@ g_km <- function(df,
     ci_ribbon = ci_ribbon
   )
   
-  median_time <- quantile(fit_km, 0.5)
+  median_time <- quantile(fit_km, 0.5, conf.int = FALSE)
   if(length(median_time) > 0){
       median_df1 <- data.frame(
           x = -2, y = 0.5, xend = median_time[, 1], yend = 0.5
