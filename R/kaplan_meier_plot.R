@@ -276,27 +276,32 @@ g_km <- function(df,
   )
   
   median_time <- quantile(fit_km, 0.5)
-  median_df1 <- data.frame(
-      x = -2, y = 0.5, xend = median_time[, 1], yend = 0.5
-  )
-  median_df2 <- data.frame(
-      x = median_time[, 1], 
-      y = 0, 
-      xend = median_time[, 1], 
-      yend = 0.5
-  )
-  median_df <- rbind(median_df1, median_df2) |>
-      dplyr::mutate(
-          conf.low = 0, 
-          conf.high = 1, 
-          strata = "1"
+  if(length(median_time) > 0){
+      median_df1 <- data.frame(
+          x = -2, y = 0.5, xend = median_time[, 1], yend = 0.5
       )
-  gg <- gg + 
-      geom_segment(
-          mapping = aes(x = x, y = y, xend = xend, yend = yend), 
-          data = median_df, linetype = "dashed")
-  
-  rm(median_time, median_df1, median_df2, median_df)
+      median_df2 <- data.frame(
+          x = median_time[, 1], 
+          y = 0, 
+          xend = median_time[, 1], 
+          yend = 0.5
+      )
+      median_df <- rbind(median_df1, median_df2) |>
+          dplyr::mutate(
+              conf.low = 0, 
+              conf.high = 1, 
+              strata = "1"
+          )
+      gg <- gg + 
+          geom_segment(
+              mapping = aes(x = x, y = y, xend = xend, yend = yend), 
+              data = median_df, linetype = "dashed")
+      
+      rm(median_time, median_df1, median_df2, median_df)
+      
+  }else{
+      rm(median_time)
+  }
 
   if (!is.null(annot_stats)) {
     if ("median" %in% annot_stats) {
