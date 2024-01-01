@@ -708,7 +708,8 @@ h_ggkm <- function(data,
         fill = .data[["strata"]]
       )
     ) +
-      ggplot2::geom_hline(yintercept = 0)
+      ggplot2::geom_hline(yintercept = 0) + 
+          ggplot2::geom_hline(yintercept = 0.5, linetype = "dashed")
   }
 
   if (ci_ribbon) {
