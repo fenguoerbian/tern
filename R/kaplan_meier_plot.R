@@ -398,7 +398,8 @@ g_km <- function(df,
                       x = median_time,
                       y = -Inf,
                       xend = median_time,
-                      yend = Inf
+                      yend = Inf,
+                      strata = unique(df[[arm]])
                   )
               }else{
                   median_df2 <- data.frame(
