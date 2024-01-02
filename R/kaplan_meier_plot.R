@@ -279,7 +279,7 @@ g_km <- function(df,
   if(length(median_time) > 0){
       if(is.null(dim(median_time))){
           median_df1 <- data.frame(
-              x = -2, y = 0.5, xend = median_time, yend = 0.5
+              x = 0, y = 0.5, xend = median_time, yend = 0.5
           )
           median_df2 <- data.frame(
               x = median_time, 
@@ -289,7 +289,7 @@ g_km <- function(df,
           )
       }else{
           median_df1 <- data.frame(
-              x = -2, y = 0.5, xend = median_time[, 1], yend = 0.5
+              x = 0, y = 0.5, xend = median_time[, 1], yend = 0.5
           )
           median_df2 <- data.frame(
               x = median_time[, 1], 
