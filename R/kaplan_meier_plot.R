@@ -218,7 +218,7 @@ g_km <- function(df,
   checkmate::assert_string(title, null.ok = TRUE)
   checkmate::assert_string(footnotes, null.ok = TRUE)
   checkmate::assert_character(col, null.ok = TRUE)
-  checkmate::assert_subset(annot_stats, c("median", "min"))
+  checkmate::assert_subset(annot_stats, c("median", "min", "median_cc"))
   checkmate::assert_logical(annot_stats_vlines)
   checkmate::assert_true(all(sapply(width_annots, grid::is.unit)))
 
@@ -253,7 +253,7 @@ g_km <- function(df,
     armval = armval,
     max_time = max_time
   )
-  
+
   xticks <- h_xticks(data = data_plot, xticks = xticks, max_time = max_time)
   gg <- h_ggkm(
     data = data_plot,
@@ -274,52 +274,52 @@ g_km <- function(df,
     ggtheme = ggtheme,
     ci_ribbon = ci_ribbon
   )
-  
+
   median_time <- quantile(fit_km, 0.5, conf.int = FALSE)
   if(length(median_time) > 0){
       if(is.null(dim(median_time))){
           median_df1 <- data.frame(
-              x = 0, 
-              y = 0.5, 
-              xend = median_time, 
+              x = 0,
+              y = 0.5,
+              xend = median_time,
               yend = 0.5
           )
           median_df2 <- data.frame(
-              x = median_time, 
-              y = 0, 
-              xend = median_time, 
+              x = median_time,
+              y = 0,
+              xend = median_time,
               yend = 0.5
           )
       }else{
           median_df1 <- data.frame(
-              x = 0, 
-              y = 0.5, 
-              xend = median_time[, 1], 
+              x = 0,
+              y = 0.5,
+              xend = median_time[, 1],
               yend = 0.5
           )
           median_df2 <- data.frame(
-              x = median_time[, 1], 
-              y = 0, 
-              xend = median_time[, 1], 
+              x = median_time[, 1],
+              y = 0,
+              xend = median_time[, 1],
               yend = 0.5
           )
       }
 
       median_df <- rbind(median_df1, median_df2) |>
           dplyr::mutate(
-              conf.low = 0, 
-              conf.high = 1, 
+              conf.low = 0,
+              conf.high = 1,
               strata = "1"
           )
-      gg <- gg + 
+      gg <- gg +
           geom_segment(
               mapping = aes(
-                  x = x, y = y, xend = xend, yend = yend, 
-                  ymin = NULL, ymax = NULL, color = NULL, fill = NULL), 
+                  x = x, y = y, xend = xend, yend = yend,
+                  ymin = NULL, ymax = NULL, color = NULL, fill = NULL),
               data = median_df, linetype = "dashed")
-      
+
       rm(median_time, median_df1, median_df2, median_df)
-      
+
   }else{
       rm(median_time)
   }
@@ -360,6 +360,100 @@ g_km <- function(df,
           geom_segment(aes(x = min_fu, xend = min_fu, y = Inf, yend = -Inf), linetype = 2, col = "darkgray")
       }
     }
+
+      if ("median_cc" %in% annot_stats) {
+          # All comer follow up time
+          fit_km_all <- survival::survfit(
+              formula = stats::as.formula(paste0("survival::Surv(", tte, ", !", is_event, ") ~ ", 1)),
+              data = df,
+              conf.int = control_surv$conf_level,
+              conf.type = control_surv$conf_type
+          )
+          gg <- gg +
+              geom_text(
+                  size = 8 / ggplot2::.pt, col = 1,
+                  x = stats::median(fit_km_all) + 0.065 * max(data_plot$time),
+                  y = ifelse(yval == "Survival", 0.62, 0.38),
+                  label = paste("All median F/U:\n", round(stats::median(fit_km_all), 1), tolower(df$AVALU[1]))
+              )
+          if (annot_stats_vlines) {
+              gg <- gg +
+                  geom_segment(aes(x = stats::median(fit_km_all), xend = stats::median(fit_km_all), y = -Inf, yend = Inf),
+                               linetype = 2, col = "darkgray"
+                  )
+          }
+
+          # Groupwise follow up time
+          fit_km_fu_grp <- survival::survfit(
+              formula = stats::as.formula(paste0("survival::Surv(", tte, ", !", is_event, ") ~ ", arm)),
+              data = df,
+              conf.int = control_surv$conf_level,
+              conf.type = control_surv$conf_type
+          )
+
+          median_time <- quantile(fit_km_fu_grp, 0.5, conf.int = FALSE)
+          if(length(median_time) > 0){
+              if(is.null(dim(median_time))){
+                  median_df2 <- data.frame(
+                      x = median_time,
+                      y = -Inf,
+                      xend = median_time,
+                      yend = Inf
+                  )
+              }else{
+                  median_df2 <- data.frame(
+                      x = median_time[, 1],
+                      y = -Inf,
+                      xend = median_time[, 1],
+                      yend = Inf
+                  ) |>
+                      dplyr::mutate(
+                          strata = stringr::str_remove(rownames(median_time),
+                                                       paste0("^", arm, "="))
+                      )
+              }
+
+              median_df <- rbind(median_df2) |>
+                  dplyr::mutate(
+                      conf.low = 0,
+                      conf.high = 1,
+                      y_text = max(data_plot$conf.high, na.rm = TRUE) -
+                        (1 : length(median_time)) / length(median_time) *
+                        ((max(data_plot$conf.high, na.rm = TRUE) - min(data_plot$conf.low, na.rm = TRUE)) / 2)
+                  )
+              gg <- gg +
+                  geom_text(
+                      mapping = aes(
+                          x = x + 0.065 * max(data_plot$time),
+                          # y = ifelse(yval == "Survival", 0.62, 0.38)
+                          y = y_text,
+                          label = paste0(strata,
+                                         " median F/U:\n",
+                                         round(x, 1),
+                                         tolower(df$AVALU[1]))
+                      ),
+                      size = 8 / ggplot2::.pt,
+                      col = 1,
+                      data = median_df
+                  )
+              if (annot_stats_vlines) {
+                  gg <- gg +
+                      geom_segment(
+                          mapping = aes(
+                              x = x,
+                              xend = xend,
+                              y = -Inf,
+                              yend = Inf,
+                              color = strata,
+                              fill = strata),
+                          data = median_df,
+                          linetype = 2
+                      )
+              }
+
+          }
+      }
+
     gg <- gg + ggplot2::guides(fill = ggplot2::guide_legend(override.aes = list(shape = NA, label = "")))
   }
 
