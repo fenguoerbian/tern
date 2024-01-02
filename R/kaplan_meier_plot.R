@@ -279,7 +279,10 @@ g_km <- function(df,
   if(length(median_time) > 0){
       if(is.null(dim(median_time))){
           median_df1 <- data.frame(
-              x = 0, y = 0.5, xend = median_time, yend = 0.5
+              x = 0, 
+              y = 0.5, 
+              xend = median_time, 
+              yend = 0.5
           )
           median_df2 <- data.frame(
               x = median_time, 
@@ -289,7 +292,10 @@ g_km <- function(df,
           )
       }else{
           median_df1 <- data.frame(
-              x = 0, y = 0.5, xend = median_time[, 1], yend = 0.5
+              x = 0, 
+              y = 0.5, 
+              xend = median_time[, 1], 
+              yend = 0.5
           )
           median_df2 <- data.frame(
               x = median_time[, 1], 
@@ -307,7 +313,9 @@ g_km <- function(df,
           )
       gg <- gg + 
           geom_segment(
-              mapping = aes(x = x, y = y, xend = xend, yend = yend), 
+              mapping = aes(
+                  x = x, y = y, xend = xend, yend = yend, 
+                  ymin = NULL, ymax = NULL, color = NULL, fill = NULL), 
               data = median_df, linetype = "dashed")
       
       rm(median_time, median_df1, median_df2, median_df)
